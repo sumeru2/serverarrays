@@ -22,16 +22,16 @@ public class SArrayCommand implements CommandExecutor {
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (sender instanceof Player player) {
             if (args.length == 0) {
-                player.sendMessage(ChatColor.RED + ServerArrays.prefix + "Используйте /sarray <add|get|set|reset|list|remove|elements> ...");
+                player.sendMessage(ChatColor.RED + ServerArrays.prefix + "Используйте /sarray <create|get|set|reset|list|delete|elements> ...");
                 return true;
             }
 
             switch (args[0].toLowerCase()) {
-                case "add" -> handleAddArray(player, args);
+                case "create" -> handleCreateArray(player, args);
                 case "get" -> handleGetElement(player, args);
                 case "set" -> handleSetElement(player, args);
-                case "reset" -> handleResetElement(player, args);
-                case "remove" -> handleRemoveArray(player, args);
+                case "reset" -> handleClearArray(player, args);
+                case "delete" -> handleDeleteElement(player, args);
                 case "list" -> handleListArrays(player);
                 case "elements" -> handleListElements(player, args);
                 default -> player.sendMessage(ChatColor.RED + ServerArrays.prefix + "Неверная команда.");
@@ -41,6 +41,7 @@ public class SArrayCommand implements CommandExecutor {
         }
         return false;
     }
+
     private boolean handleListElements(Player player, String[] args) {
         if (args.length != 2) {
             player.sendMessage(ChatColor.RED + ServerArrays.prefix + ServerArrays.commandElementsError);
@@ -61,25 +62,33 @@ public class SArrayCommand implements CommandExecutor {
         }
         return true;
     }
-    private boolean handleRemoveArray(Player player, String[] args) {
-        if (args.length != 2) {
-            player.sendMessage(ChatColor.RED + ServerArrays.prefix + ServerArrays.commandRemoveError);
+
+    private boolean handleDeleteElement(Player player, String[] args) {
+        if (args.length != 3) {
+            player.sendMessage(ChatColor.RED + ServerArrays.prefix + ServerArrays.commandDeleteError);
             return false;
         }
 
         String name = args[1];
-        boolean removed = utils.removeArray(name);
-        if (removed) {
-            player.sendMessage(ChatColor.GREEN + ServerArrays.prefix + "Массив " + name + " успешно удален.");
+        int index = args.length == 3 ? Integer.parseInt(args[2]) : -1;
+
+        if (index == -1) {
+            utils.removeLastElement(name);
+            player.sendMessage(ChatColor.GREEN + ServerArrays.prefix + "Последний элемент массива " + name + " успешно удален.");
         } else {
-            player.sendMessage(ChatColor.RED + ServerArrays.prefix + "Не удалось удалить массив " + name + ". Возможно, он не существует.");
+            boolean deleted = utils.deleteElementInArray(name, index);
+            if (deleted) {
+                player.sendMessage(ChatColor.GREEN + ServerArrays.prefix + "Элемент на индексе " + index + " успешно удален из массива " + name + ".");
+            } else {
+                player.sendMessage(ChatColor.RED + ServerArrays.prefix + "Не удалось удалить элемент из массива " + name + ". Возможно, индекс не существует.");
+            }
         }
         return true;
     }
 
-    private boolean handleAddArray(Player player, String[] args) {
+    private boolean handleCreateArray(Player player, String[] args) {
         if (args.length != 3) {
-            player.sendMessage(ChatColor.RED + ServerArrays.prefix + ServerArrays.commandAddError);
+            player.sendMessage(ChatColor.RED + ServerArrays.prefix + ServerArrays.commandCreateError);
             return false;
         }
 
@@ -166,26 +175,18 @@ public class SArrayCommand implements CommandExecutor {
         return true;
     }
 
-    private boolean handleResetElement(Player player, String[] args) {
-        if (args.length != 3) {
+    private boolean handleClearArray(Player player, String[] args) {
+        if (args.length != 2) {
             player.sendMessage(ChatColor.RED + ServerArrays.prefix + ServerArrays.commandResetError);
             return false;
         }
         String name = args[1];
-        int index;
 
-        try {
-            index = Integer.parseInt(args[2]);
-        } catch (NumberFormatException e) {
-            player.sendMessage(ChatColor.RED + ServerArrays.prefix + "Индекс должен быть числом!");
-            return false;
-        }
-
-        boolean reset = utils.resetElementInArray(name, index);
-        if (reset) {
-            player.sendMessage(ChatColor.GREEN + ServerArrays.prefix + ServerArrays.commandResetCorrect.replace("%variable%", String.valueOf(index)));
+        boolean cleared = utils.clearArray(name);
+        if (cleared) {
+            player.sendMessage(ChatColor.GREEN + ServerArrays.prefix + "Массив " + name + " успешно очищен.");
         } else {
-            player.sendMessage(ChatColor.RED + ServerArrays.prefix + "Не удалось сбросить значение переменной.");
+            player.sendMessage(ChatColor.RED + ServerArrays.prefix + "Не удалось очистить массив " + name + ". Возможно, он не существует.");
         }
         return true;
     }
